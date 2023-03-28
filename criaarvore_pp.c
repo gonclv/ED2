@@ -20,14 +20,14 @@ void main() {
     TNo *raiz = malloc(sizeof(TNo));
     if(raiz) {
         TNo **rr = &raiz;
-        raiz->num = 10;
-        raiz->esq = NULL;
-        raiz->dir = (TNo *) malloc(sizeof(TNo));
-        if(raiz->dir) {
+        (*rr)->num = 10;
+        (*rr)->esq = NULL;
+        (*rr)->dir = (TNo *) malloc(sizeof(TNo));
+        if((*rr)->dir) {
             TNo **r2 = &(raiz->dir);
-            (raiz->dir)->num = 20;
-            (raiz->dir)->esq = NULL;
-            (raiz->dir)->dir = NULL;
+            (*r2)->num = 20;
+            (*r2)->esq = NULL;
+            (*r2)->dir = NULL;
         }
     }
     
