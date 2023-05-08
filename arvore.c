@@ -14,21 +14,20 @@ void emOrdem(TNoABP *raiz) {
   emOrdem(raiz->dir);
 }
 
-/*Mudar para ponteiro de ponteiro*/
-TNoABP *menorNo(TNoABP *raiz) {
-    if(raiz == NULL) return NULL;
-    while(raiz->esq != NULL) raiz = raiz->esq;
-    return raiz;
+TNoABP **menorNo(TNoABP **raiz) {
+    if(*raiz == NULL) return NULL;
+    TNoABP **menor = raiz;
+    while((*menor)->esq != NULL) menor = &(*menor)->esq;
+    return menor;
 }
 
-/*Mudar para ponteiro de ponteiro*/
-TNoABP *maiorNo(TNoABP *raiz) {
-    if(raiz == NULL) return NULL;
-    while(raiz->dir != NULL) raiz = raiz->dir;
-    return raiz;
+TNoABP **maiorNo(TNoABP **raiz) {
+    if(*raiz == NULL) return NULL;
+    TNoABP **maior = raiz;
+    while((*maior)->dir != NULL) maior = &(*maior)->dir;
+    return maior;
 }
 
-/*acho q pronto se eu entendi certo o enunciado*/
 TNoABP *insere(TNoABP *raiz, int chave) {
   TNoABP *novo = (TNoABP *) malloc(sizeof(TNoABP));
   if(novo == NULL) return raiz;
@@ -111,17 +110,21 @@ void main() {
     free(((*r)->dir)->esq);
     ((*r)->dir)->esq = NULL;
 
-    TNoABP *resposta = menorNo(raiz);
-    printf("Menor: %d\n",resposta->chave);
+    int num, op;
+    do {
+      printf("1 - Inserir número, 0 - Continuar: ");
+      scanf("%d", &op);
+      if(op == 1) {
+        scanf("%d", &num);
+        raiz = insere(raiz, num);
+    }
+    } while(op != 0);
 
-    resposta = maiorNo(raiz);
-    printf("Maior: %d\n",resposta->chave);
+    TNoABP **resposta = menorNo(&raiz);
+    printf("Menor: %d\n", (*resposta)->chave);
 
-  int num;
-  do {
-    scanf("%d", &num);
-    raiz = insere(raiz, num);
-  } while(num != 0);
+    resposta = maiorNo(&raiz);
+    printf("Maior: %d\n", (*resposta)->chave);
 
     emOrdem(raiz);
 }
