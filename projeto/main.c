@@ -1,4 +1,4 @@
-//COMPILAR: gcc main.c -lcrypto
+//COMPILAR: gcc main.c mtwister.c -lcrypto
 #include <string.h>
 #include <math.h>
 #include "openssl/crypto.h"
@@ -17,12 +17,7 @@ typedef struct blocoMinerado {
     unsigned char hash[SHA256_DIGEST_LENGTH];
 } BlocoMinerado;
 
-void preencheZeros(unsigned char vetor[], int tam) {
-    for(int i = 0; i < tam; i++)
-        vetor[i] = 0;
-}
-
-void copiaHash(unsigned char destino[], unsigned char origem[], int tam) {
+void copiaVetor(unsigned char destino[], unsigned char origem[], int tam) {
     for(int i = 0; i < tam; i++)
         destino[i] = origem[i];
 }
@@ -49,32 +44,31 @@ BlocoMinerado mineraBloco(unsigned int num, unsigned char hashAnterior[]) {
     //Preenchendo dados no bloco
     bloco.numero = num;
     bloco.nonce = 0;
+    unsigned char data[184] = {0};
 
-    preencheZeros(bloco.data, 184);
     MTRand r = seedRand(1234567);
-    bloco.data[0] = genRandLong(&r) % 256;
-    bloco.data[1] = genRandLong(&r) % 256;
-    bloco.data[2] = 3;
-    bloco.data[3] = genRandLong(&r) % 256;
-    bloco.data[4] = genRandLong(&r) % 256;
-    bloco.data[5] = 6;
-    bloco.data[6] = 7;
-    bloco.data[7] = 25;
-    bloco.data[8] = 50;
-    bloco.data[183] = genRandLong(&r) % 256;
+    int quantTransacoes = genRandLong(&r) % 62;
 
-    copiaHash(bloco.hashAnterior, hashAnterior, SHA256_DIGEST_LENGTH);
+    for(int i = 0; i < quantTransacoes; i++) {
+        data[3*i+0] = genRandLong(&r) % 256;
+        data[3*i+1] = genRandLong(&r) % 256;
+        data[3*i+2] = genRandLong(&r) % 51;
+    }
+    
+    data[183] = genRandLong(&r) % 256;
+    copiaVetor(bloco.data, data, 184);
+    copiaVetor(bloco.hashAnterior, hashAnterior, SHA256_DIGEST_LENGTH);
 
     //Obtendo hash do bloco
     unsigned char hash[SHA256_DIGEST_LENGTH];
     while(bloco.nonce < pow(2,32)) {
         SHA256((unsigned char *) &bloco, sizeof(BlocoNaoMinerado), hash);
-        printHash(hash, SHA256_DIGEST_LENGTH);
+        //printHash(hash, SHA256_DIGEST_LENGTH);
 
         if(hash[0] == 0) {
             BlocoMinerado minerado;
             minerado.bloco = bloco;
-            copiaHash(minerado.hash, hash, SHA256_DIGEST_LENGTH);
+            copiaVetor(minerado.hash, hash, SHA256_DIGEST_LENGTH);
             return minerado;
         }
 
@@ -85,16 +79,23 @@ BlocoMinerado mineraBloco(unsigned int num, unsigned char hashAnterior[]) {
 
 int main() {
     int contBlocos = 1;
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    preencheZeros(hash, SHA256_DIGEST_LENGTH);
+    unsigned char hashAnterior[SHA256_DIGEST_LENGTH] = {0};
     BlocoMinerado minerados[16]; //16*256 = 4096
-    minerados[0] = mineraBloco(contBlocos, hash);
 
-    //Imprimindo bloco
-    printf("%d\n", minerados[0].bloco.numero);
-    printVetor(minerados[0].bloco.data, 184);
-    printf("%d\n", minerados[0].bloco.nonce);
-    printHash(minerados[0].hash, SHA256_DIGEST_LENGTH);
-    printHash(minerados[0].bloco.hashAnterior, SHA256_DIGEST_LENGTH);
+    for(int i = 0; i < 16; i++) {
+        minerados[i] = mineraBloco(contBlocos, hashAnterior);
+        copiaVetor(hashAnterior, minerados[i].hash, SHA256_DIGEST_LENGTH);
+        contBlocos++;
+    }
+
+    for(int i = 0; i < 16; i++) {
+        //Imprimindo bloco
+        printf("%d\n", minerados[i].bloco.numero);
+        printVetor(minerados[i].bloco.data, 184);
+        printf("%d\n", minerados[i].bloco.nonce);
+        printHash(minerados[i].hash, SHA256_DIGEST_LENGTH);
+        printHash(minerados[i].bloco.hashAnterior, SHA256_DIGEST_LENGTH);
+    }
+    
     return 0;
 }
